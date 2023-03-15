@@ -75,7 +75,7 @@ class Config(NamedTuple):
 
     config_name: str = "base"
     dump: str = "2017-51"
-    output_dir: Path = Path("data")
+    output_dir: Path = Path("/data")
     mined_dir: str = "mined"
     execution: str = "auto"
     num_shards: int = 1600
@@ -87,7 +87,7 @@ class Config(NamedTuple):
     lang_blacklist: Sequence[str] = []
     lang_threshold: float = 0.5
     keep_bucket: Sequence[str] = []
-    lm_dir: Path = Path("data/lm_sp")
+    lm_dir: Path = Path("/model/lm_sp")
     cutoff: Path = CUTOFF_CSV
     lm_languages: Optional[Sequence[str]] = None
     mine_num_processes: int = 16

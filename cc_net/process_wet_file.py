@@ -20,7 +20,8 @@ from bs4 import BeautifulSoup  # type: ignore
 
 from cc_net import jsonql
 
-WET_URL_ROOT = "https://commoncrawl.s3.amazonaws.com"
+WET_URL_ROOT = "https://data.commoncrawl.org"
+# WET_URL_ROOT = "https://commoncrawl.s3.amazonaws.com"
 
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ def parse_doc(headers: List[str], doc: List[str]) -> Optional[dict]:
     WARC-Record-ID: <urn:uuid:8865156e-d5f1-4734-9c68-4b46eaf2bb7e>
     WARC-Refers-To: <urn:uuid:340152e2-65cf-4143-b522-8ce4e2d069d7>
     WARC-Block-Digest: sha1:S3DTWCONT2L6ORTGCY2KXEZ37LNBB7V2
+    WARC-Identified-Content-Language: eng
     Content-Type: text/plain
     Content-Length: 7743
     """
@@ -70,17 +72,28 @@ def parse_doc(headers: List[str], doc: List[str]) -> Optional[dict]:
         return None
 
     try:
-        warc_type = headers[1].split()[1]
+        headers_map = {}
+        for header in headers[1:]:
+            if not header:
+                continue
+            key, value = header.split(": ", 1)
+            headers_map[key] = value
+
+        warc_type = headers_map["WARC-Type"]
         if warc_type != "conversion":
             return None
-        url = headers[2].split()[1]
-        date = headers[3].split()[1]
-        digest = headers[6].split()[1]
-        length = int(headers[8].split()[1])
+        url = headers_map["WARC-Target-URI"]
+        date = headers_map["WARC-Date"]
+        digest = headers_map["WARC-Block-Digest"]
+        length = int(headers_map["Content-Length"])
+        if "WARC-Identified-Content-Language" in headers_map:
+            lang = headers_map["WARC-Identified-Content-Language"]
+            if lang != "eng":
+                return None
     except Exception as e:
         logger.warning("Can't parse header:", e, headers, doc)
         return None
-
+    
     # Docs are separated by two empty lines.
     last = None
     if not doc[-1] and not doc[-2]:
